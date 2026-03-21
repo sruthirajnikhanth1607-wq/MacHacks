@@ -1,34 +1,16 @@
 import Link from "next/link";
+import { RecruiterBackground } from "@/components/recruiter-background";
+import { RecruiterLogo } from "@/components/recruiter-logo";
 
 export default function SplashPage() {
   return (
     <div className="splash-root relative min-h-screen overflow-hidden bg-[#050508] text-zinc-100">
-      {/* Ambient glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-1/4 top-0 h-[520px] w-[520px] rounded-full bg-violet-600/30 blur-[120px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-1/4 bottom-0 h-[480px] w-[480px] rounded-full bg-cyan-500/20 blur-[110px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/3 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-[90px]"
-      />
-
-      {/* Grid */}
-      <div
-        aria-hidden
-        className="splash-grid pointer-events-none absolute inset-0 opacity-[0.35]"
-      />
+      <RecruiterBackground />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-12 pt-8 md:px-8 md:pt-12">
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 text-lg font-bold text-white shadow-lg shadow-violet-500/25">
-              R
-            </span>
+            <RecruiterLogo priority />
             <div>
               <p className="text-sm font-semibold tracking-tight text-white">
                 RecruiterAI

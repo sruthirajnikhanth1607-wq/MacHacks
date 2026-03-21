@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "RecruiterAI — Resume & job match",
   description:
     "See how well your resume fits a role: match scoring, gap insights, and improved bullets powered by AI.",
+  icons: {
+    icon: "/recruiterai-logo.png",
+    apple: "/recruiterai-logo.png",
+  },
 };
 
 export default function RootLayout({
