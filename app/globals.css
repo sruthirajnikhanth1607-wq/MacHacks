@@ -10,3 +10,43 @@ body {
   background: #f7f7fb;
   color: #0f172a;
 }
+
+/* Splash page — scoped via .splash-root on landing only */
+.splash-root {
+  color-scheme: dark;
+}
+
+.splash-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+}
+
+.splash-badge {
+  animation: splash-fade-up 0.7s ease-out both;
+}
+
+.splash-root h1 {
+  animation: splash-fade-up 0.75s ease-out 0.08s both;
+}
+
+.splash-subtitle {
+  animation: splash-fade-up 0.8s ease-out 0.14s both;
+}
+
+.splash-cta {
+  animation: splash-fade-up 0.85s ease-out 0.2s both;
+}
+
+@keyframes splash-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

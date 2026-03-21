@@ -1,296 +1,242 @@
-"use client";
+import Link from "next/link";
 
-import { ChangeEvent, FormEvent, useState } from "react";
-
-type AttentionLevel = "High" | "Medium" | "Low";
-
-type AnalysisResult = {
-  match_score: number;
-  key_strengths: string[];
-  missing_skills: string[];
-  improved_bullets: string[];
-  recruiter_summary: string;
-  attention_map: { section: string; level: AttentionLevel }[];
-};
-
-const levelStyles: Record<AttentionLevel, string> = {
-  High: "bg-red-100 text-red-700",
-  Medium: "bg-yellow-100 text-yellow-700",
-  Low: "bg-blue-100 text-blue-700",
-};
-
-const levelEmoji: Record<AttentionLevel, string> = {
-  High: "🔴",
-  Medium: "🟡",
-  Low: "🔵",
-};
-
-export default function Home() {
-  const [resume, setResume] = useState("");
-  const [job, setJob] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [parsingResume, setParsingResume] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-
-  const handleAnalyze = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setResult(null);
-
-    if (!resume.trim() || !job.trim()) {
-      setError("Please paste both your resume and the job description.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ resume, job }),
-      });
-
-      const payload = (await response.json()) as {
-        result?: AnalysisResult;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.result) {
-        throw new Error(payload.error || "Unable to analyze resume right now.");
-      }
-
-      setResult(payload.result);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unexpected error occurred.";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResumeFileUpload = async (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-    setParsingResume(true);
-
-    try {
-      const text = await extractResumeText(file);
-      if (!text.trim()) {
-        throw new Error("Uploaded file appears to be empty.");
-      }
-
-      setResume(text.trim());
-      setUploadedFileName(file.name);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to parse the resume file.";
-      setError(message);
-      setUploadedFileName(null);
-    } finally {
-      setParsingResume(false);
-      event.target.value = "";
-    }
-  };
-
+export default function SplashPage() {
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 md:px-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm md:p-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-          RecruiterAI
-        </h1>
-        <p className="mt-2 text-slate-600">Optimize your resume in seconds</p>
+    <div className="splash-root relative min-h-screen overflow-hidden bg-[#050508] text-zinc-100">
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-1/4 top-0 h-[520px] w-[520px] rounded-full bg-violet-600/30 blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-1/4 bottom-0 h-[480px] w-[480px] rounded-full bg-cyan-500/20 blur-[110px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-[90px]"
+      />
 
-        <form onSubmit={handleAnalyze} className="mt-8 space-y-5">
-          <div>
-            <label
-              htmlFor="resume"
-              className="mb-2 block text-sm font-semibold text-slate-700"
-            >
-              Resume
-            </label>
-            <div className="mb-3">
-              <input
-                id="resume-file"
-                type="file"
-                accept=".pdf,.docx,.txt,.md,.rtf"
-                onChange={handleResumeFileUpload}
-                disabled={loading || parsingResume}
-                className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                Upload PDF, DOCX, TXT, MD, or RTF. You can still paste/edit
-                text below.
+      {/* Grid */}
+      <div
+        aria-hidden
+        className="splash-grid pointer-events-none absolute inset-0 opacity-[0.35]"
+      />
+
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-5 pb-12 pt-8 md:px-8 md:pt-12">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 text-lg font-bold text-white shadow-lg shadow-violet-500/25">
+              R
+            </span>
+            <div>
+              <p className="text-sm font-semibold tracking-tight text-white">
+                RecruiterAI
               </p>
-              {uploadedFileName && (
-                <p className="mt-1 text-xs text-slate-600">
-                  Loaded file: {uploadedFileName}
-                </p>
-              )}
-              {parsingResume && (
-                <p className="mt-1 text-xs font-medium text-slate-700">
-                  Parsing resume file...
-                </p>
-              )}
+              <p className="text-xs text-zinc-500">Resume ↔ job intelligence</p>
             </div>
-            <textarea
-              id="resume"
-              value={resume}
-              onChange={(event) => setResume(event.target.value)}
-              rows={10}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-              placeholder="Paste your resume here..."
-            />
           </div>
-
-          <div>
-            <label
-              htmlFor="job"
-              className="mb-2 block text-sm font-semibold text-slate-700"
-            >
-              Job Description
-            </label>
-            <textarea
-              id="job"
-              value={job}
-              onChange={(event) => setJob(event.target.value)}
-              rows={10}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-              placeholder="Paste the job description here..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || parsingResume}
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          <Link
+            href="/analyze"
+            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 backdrop-blur transition hover:border-white/20 hover:bg-white/10"
           >
-            {loading ? "Analyzing..." : "Analyze Resume"}
-          </button>
-        </form>
+            Open app →
+          </Link>
+        </header>
 
-        {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+        <main className="mt-16 flex flex-1 flex-col items-center text-center md:mt-20">
+          <p className="splash-badge inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-zinc-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399]" />
+            AI-powered matching
           </p>
-        )}
-      </section>
 
-      {result && (
-        <section className="mt-8 grid gap-4 md:grid-cols-2">
-          <article className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Match Score
-            </h2>
-            <p className="mt-3 text-center text-6xl font-bold text-slate-900">
-              {result.match_score}
-            </p>
-          </article>
+          <h1 className="mt-8 max-w-4xl text-balance text-4xl font-semibold tracking-tight text-white md:text-6xl md:leading-[1.08]">
+            Turn any resume into a{" "}
+            <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+              role-matched pitch
+            </span>{" "}
+            in seconds.
+          </h1>
 
-          <Card title="Key Strengths" items={result.key_strengths} />
-          <Card title="Missing Skills" items={result.missing_skills} />
-          <Card title="Improved Bullets" items={result.improved_bullets} />
+          <p className="splash-subtitle mt-6 max-w-2xl text-pretty text-base leading-relaxed text-zinc-400 md:text-lg">
+            Add a job description, upload your resume, and get a clear match
+            score, gap analysis, and stronger bullet points you can use right
+            away.
+          </p>
 
-          <article className="rounded-2xl bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Recruiter Summary
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              {result.recruiter_summary}
-            </p>
-          </article>
-
-          <article className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Attention Map
-            </h3>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {result.attention_map.map((item) => (
-                <span
-                  key={`${item.section}-${item.level}`}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium ${levelStyles[item.level]}`}
+          <div className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
+            <Link
+              href="/analyze"
+              className="splash-cta group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-8 py-4 text-base font-semibold text-white shadow-[0_0_40px_-10px_rgba(139,92,246,0.7)] transition hover:shadow-[0_0_55px_-8px_rgba(34,211,238,0.55)]"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-500 transition group-hover:brightness-110" />
+              <span className="relative flex items-center gap-2">
+                Get started
+                <svg
+                  className="h-5 w-5 transition group-hover:translate-x-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden
                 >
-                  {levelEmoji[item.level]} {item.section} - {item.level}
-                </span>
-              ))}
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </span>
+            </Link>
+            <a
+              href="https://github.com/sruthirajnikhanth1607-wq/MacHacks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-medium text-zinc-200 backdrop-blur transition hover:border-white/20 hover:bg-white/10"
+            >
+              View on GitHub
+            </a>
+          </div>
+
+          <section
+            className="mt-20 w-full max-w-4xl text-left"
+            aria-labelledby="splash-features-heading"
+          >
+            <div className="border-t border-white/10 pt-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">
+                Features
+              </p>
+              <h2
+                id="splash-features-heading"
+                className="mt-2 text-lg font-semibold text-white md:text-xl"
+              >
+                What RecruiterAI includes
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-500">
+                Each run-through highlights how your experience lines up with the
+                role — not just a single number.
+              </p>
             </div>
-          </article>
-        </section>
-      )}
-    </main>
+
+            <ul className="mt-10 space-y-8 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-10">
+              <li className="flex gap-4 sm:flex-col sm:gap-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-violet-300"
+                  aria-hidden
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v4.125c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 013 17.25v-4.125zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v8.625c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125v-8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v13.125c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    Match score
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+                    See how closely your resume aligns with the job description.
+                  </p>
+                </div>
+              </li>
+
+              <li className="flex gap-4 sm:flex-col sm:gap-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-cyan-300"
+                  aria-hidden
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 6.75H15a2.25 2.25 0 012.25 2.25v10.5A2.25 2.25 0 0115 21.75H9a2.25 2.25 0 01-2.25-2.25V9A2.25 2.25 0 019 6.75zM9 6.75V4.875A2.625 2.625 0 0111.625 2.25h.75a2.625 2.625 0 012.625 2.625V6.75M9 6.75h6"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6M9 15.75h4.5"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-white">Gap map</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+                    Spot missing skills and priorities so you know what to fix
+                    first.
+                  </p>
+                </div>
+              </li>
+
+              <li className="flex gap-4 sm:flex-col sm:gap-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-fuchsia-300"
+                  aria-hidden
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-white">Rewrite</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+                    Get stronger, role-specific bullet lines you can paste into
+                    your resume.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xs text-zinc-600">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-500" />
+              Next.js · React
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-cyan-500" />
+              Gemini-powered analysis
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-fuchsia-500" />
+              PDF &amp; DOCX upload
+            </span>
+          </div>
+        </main>
+
+        <footer className="mt-auto border-t border-white/5 pt-8 text-center text-xs text-zinc-600">
+          © {new Date().getFullYear()} RecruiterAI ·{" "}
+          <Link
+            href="/analyze"
+            className="text-zinc-400 underline-offset-4 hover:underline"
+          >
+            Analyze a resume
+          </Link>
+        </footer>
+      </div>
+    </div>
   );
-}
-
-function Card({ title, items }: { title: string; items: string[] }) {
-  return (
-    <article className="rounded-2xl bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
-async function extractResumeText(file: File): Promise<string> {
-  const fileName = file.name.toLowerCase();
-
-  if (fileName.endsWith(".pdf")) {
-    return extractPdfText(file);
-  }
-
-  if (fileName.endsWith(".docx")) {
-    const mammoth = await import("mammoth");
-    const arrayBuffer = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
-  }
-
-  if (
-    fileName.endsWith(".txt") ||
-    fileName.endsWith(".md") ||
-    fileName.endsWith(".rtf")
-  ) {
-    return file.text();
-  }
-
-  throw new Error(
-    "Unsupported file type. Please upload PDF, DOCX, TXT, MD, or RTF."
-  );
-}
-
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-  const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjsLib.getDocument({ data });
-  const pdf = await loadingTask.promise;
-
-  const pages: string[] = [];
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  return pages.join("\n");
 }
