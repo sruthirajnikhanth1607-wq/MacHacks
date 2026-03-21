@@ -1,296 +1,95 @@
-"use client";
+import Link from "next/link";
 
-import { ChangeEvent, FormEvent, useState } from "react";
-
-type AttentionLevel = "High" | "Medium" | "Low";
-
-type AnalysisResult = {
-  match_score: number;
-  key_strengths: string[];
-  missing_skills: string[];
-  improved_bullets: string[];
-  recruiter_summary: string;
-  attention_map: { section: string; level: AttentionLevel }[];
-};
-
-const levelStyles: Record<AttentionLevel, string> = {
-  High: "bg-red-100 text-red-700",
-  Medium: "bg-yellow-100 text-yellow-700",
-  Low: "bg-blue-100 text-blue-700",
-};
-
-const levelEmoji: Record<AttentionLevel, string> = {
-  High: "🔴",
-  Medium: "🟡",
-  Low: "🔵",
-};
-
-export default function Home() {
-  const [resume, setResume] = useState("");
-  const [job, setJob] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [parsingResume, setParsingResume] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-
-  const handleAnalyze = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setResult(null);
-
-    if (!resume.trim() || !job.trim()) {
-      setError("Please paste both your resume and the job description.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ resume, job }),
-      });
-
-      const payload = (await response.json()) as {
-        result?: AnalysisResult;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.result) {
-        throw new Error(payload.error || "Unable to analyze resume right now.");
-      }
-
-      setResult(payload.result);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unexpected error occurred.";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResumeFileUpload = async (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setError(null);
-    setResult(null);
-    setParsingResume(true);
-
-    try {
-      const text = await extractResumeText(file);
-      if (!text.trim()) {
-        throw new Error("Uploaded file appears to be empty.");
-      }
-
-      setResume(text.trim());
-      setUploadedFileName(file.name);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Failed to parse the resume file.";
-      setError(message);
-      setUploadedFileName(null);
-    } finally {
-      setParsingResume(false);
-      event.target.value = "";
-    }
-  };
-
+export default function SplashPage() {
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 md:px-6">
-      <section className="rounded-2xl bg-white p-6 shadow-sm md:p-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-          RecruiterAI
-        </h1>
-        <p className="mt-2 text-slate-600">Optimize your resume in seconds</p>
+    <div className="relative min-h-screen overflow-hidden bg-[#0f172a]">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-30%,rgba(59,130,246,0.22),transparent_55%)]"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_100%_50%,rgba(139,92,246,0.12),transparent)]" />
 
-        <form onSubmit={handleAnalyze} className="mt-8 space-y-5">
-          <div>
-            <label
-              htmlFor="resume"
-              className="mb-2 block text-sm font-semibold text-slate-700"
-            >
-              Resume
-            </label>
-            <div className="mb-3">
-              <input
-                id="resume-file"
-                type="file"
-                accept=".pdf,.docx,.txt,.md,.rtf"
-                onChange={handleResumeFileUpload}
-                disabled={loading || parsingResume}
-                className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                Upload PDF, DOCX, TXT, MD, or RTF. You can still paste/edit
-                text below.
-              </p>
-              {uploadedFileName && (
-                <p className="mt-1 text-xs text-slate-600">
-                  Loaded file: {uploadedFileName}
-                </p>
-              )}
-              {parsingResume && (
-                <p className="mt-1 text-xs font-medium text-slate-700">
-                  Parsing resume file...
-                </p>
-              )}
-            </div>
-            <textarea
-              id="resume"
-              value={resume}
-              onChange={(event) => setResume(event.target.value)}
-              rows={10}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-              placeholder="Paste your resume here..."
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="job"
-              className="mb-2 block text-sm font-semibold text-slate-700"
-            >
-              Job Description
-            </label>
-            <textarea
-              id="job"
-              value={job}
-              onChange={(event) => setJob(event.target.value)}
-              rows={10}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-              placeholder="Paste the job description here..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || parsingResume}
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-10 md:px-8 md:py-14">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl">
+            RecruiterAI
+          </span>
+          <Link
+            href="/analyze"
+            className="rounded-xl border border-gray-600 px-4 py-2.5 text-sm font-medium text-gray-200 transition-all duration-200 hover:border-gray-500 hover:bg-gray-800/80"
           >
-            {loading ? "Analyzing..." : "Analyze Resume"}
-          </button>
-        </form>
+            Open analyzer
+          </Link>
+        </header>
 
-        {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+        <main className="mt-16 flex flex-1 flex-col items-center text-center md:mt-20">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-400/95">
+            AI-powered resume feedback
           </p>
-        )}
-      </section>
+          <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight text-white md:text-6xl md:leading-[1.05]">
+            <span className="bg-gradient-to-r from-sky-200 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Optimize your resume
+            </span>
+            <br />
+            <span className="text-gray-100">for the role you want</span>
+          </h1>
+          <p className="mt-6 max-w-lg text-base leading-relaxed text-gray-400 md:text-lg">
+            Drop in your resume and a job description. Get a match score,
+            strengths and gaps, improved bullets, scan tips, and optional GitHub
+            ideas — fast, clear, and demo-ready.
+          </p>
 
-      {result && (
-        <section className="mt-8 grid gap-4 md:grid-cols-2">
-          <article className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Match Score
-            </h2>
-            <p className="mt-3 text-center text-6xl font-bold text-slate-900">
-              {result.match_score}
-            </p>
-          </article>
+          <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+            <Link
+              href="/analyze"
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-indigo-600 hover:shadow-xl active:scale-[0.98]"
+            >
+              Get started
+            </Link>
+            <Link
+              href="/analyze"
+              className="inline-flex items-center justify-center rounded-xl border border-gray-600 bg-gray-800/40 px-8 py-4 text-base font-medium text-gray-200 backdrop-blur-sm transition-all duration-200 hover:bg-gray-800/90"
+            >
+              Analyze resume
+            </Link>
+          </div>
 
-          <Card title="Key Strengths" items={result.key_strengths} />
-          <Card title="Missing Skills" items={result.missing_skills} />
-          <Card title="Improved Bullets" items={result.improved_bullets} />
+          <ul className="mt-20 grid w-full max-w-4xl gap-4 text-left sm:grid-cols-3">
+            {[
+              {
+                title: "Match & gaps",
+                body: "See fit score and what’s missing for this posting.",
+              },
+              {
+                title: "Recruiter scan tips",
+                body: "Plain-language layout tips based on how people skim resumes.",
+              },
+              {
+                title: "GitHub optional",
+                body: "Tie public repos to your story when you add a username.",
+              },
+            ].map((item) => (
+              <li
+                key={item.title}
+                className="rounded-2xl border border-gray-700/90 bg-gray-800/60 p-5 shadow-md backdrop-blur-sm transition-all duration-200 hover:border-gray-600"
+              >
+                <p className="font-semibold text-white">{item.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                  {item.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </main>
 
-          <article className="rounded-2xl bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Recruiter Summary
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              {result.recruiter_summary}
-            </p>
-          </article>
-
-          <article className="rounded-2xl bg-white p-6 shadow-sm md:col-span-2">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Attention Map
-            </h3>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {result.attention_map.map((item) => (
-                <span
-                  key={`${item.section}-${item.level}`}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium ${levelStyles[item.level]}`}
-                >
-                  {levelEmoji[item.level]} {item.section} - {item.level}
-                </span>
-              ))}
-            </div>
-          </article>
-        </section>
-      )}
-    </main>
+        <footer className="mt-16 border-t border-gray-800/80 pt-8 text-center text-xs text-gray-600">
+          No sign-up · Runs in your browser · Add{" "}
+          <code className="rounded bg-gray-800 px-1.5 py-0.5 text-gray-400">
+            GEMINI_API_KEY
+          </code>{" "}
+          locally
+        </footer>
+      </div>
+    </div>
   );
-}
-
-function Card({ title, items }: { title: string; items: string[] }) {
-  return (
-    <article className="rounded-2xl bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
-async function extractResumeText(file: File): Promise<string> {
-  const fileName = file.name.toLowerCase();
-
-  if (fileName.endsWith(".pdf")) {
-    return extractPdfText(file);
-  }
-
-  if (fileName.endsWith(".docx")) {
-    const mammoth = await import("mammoth");
-    const arrayBuffer = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
-  }
-
-  if (
-    fileName.endsWith(".txt") ||
-    fileName.endsWith(".md") ||
-    fileName.endsWith(".rtf")
-  ) {
-    return file.text();
-  }
-
-  throw new Error(
-    "Unsupported file type. Please upload PDF, DOCX, TXT, MD, or RTF."
-  );
-}
-
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-  const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjsLib.getDocument({ data });
-  const pdf = await loadingTask.promise;
-
-  const pages: string[] = [];
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  return pages.join("\n");
 }

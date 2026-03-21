@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { analyzeWithGemini } from "@/lib/gemini";
+import { fetchGithubContext } from "@/lib/github";
 
 type RequestBody = {
   resume?: string;
   job?: string;
+  githubUsername?: string;
 };
 
 export async function POST(request: Request) {
@@ -11,6 +13,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as RequestBody;
     const resume = body.resume?.trim();
     const job = body.job?.trim();
+    const githubUsername = body.githubUsername?.trim();
 
     if (!resume || !job) {
       return NextResponse.json(
@@ -19,7 +22,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await analyzeWithGemini(resume, job);
+    let githubContext: string | undefined;
+    if (githubUsername) {
+      githubContext = await fetchGithubContext(githubUsername);
+    }
+
+    const result = await analyzeWithGemini(resume, job, githubContext);
     return NextResponse.json({ result });
   } catch (error) {
     const message =
